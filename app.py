@@ -11,13 +11,23 @@ api = FastAPI(title="Subtitle Maker")
 
 def download_best_video(url, outdir):
     outtmpl = os.path.join(outdir, "%(id)s.%(ext)s")
+    # Küçük dosyaları (50MB altı) tercih et; yoksa mp4/best
     ydl_opts = {
         "outtmpl": outtmpl,
         "merge_output_format": "mp4",
-        "format": "mp4/best",
+        "format": "mp4[filesize<50M]/best[filesize<50M]/mp4/best",
         "quiet": True,
         "noprogress": True,
     }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
+        path = ydl.prepare_filename(info)
+        base = os.path.splitext(path)[0]
+        if not path.endswith(".mp4"):
+            if os.path.exists(base + ".mp4"):
+                path = base + ".mp4"
+        return path
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         path = ydl.prepare_filename(info)
