@@ -69,3 +69,10 @@ def make_subtitled(data: Req):
         srt = whisper_srt(apath, data.translate_to)
         out = burn_subtitles(vpath, srt, td)
         return FileResponse(out, filename=os.path.basename(out), media_type="video/mp4")
+@api.post("/transcribe")
+def transcribe_only(data: Req):
+    with tempfile.TemporaryDirectory() as td:
+        vpath = download_best_video(data.url, td)
+        apath = extract_audio(vpath, td)
+        srt = whisper_srt(apath, data.translate_to)
+        return PlainTextResponse(srt, media_type="text/plain; charset=utf-8")
